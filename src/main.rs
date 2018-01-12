@@ -169,9 +169,10 @@ mod multiboot1 {
 }
 
 fn create_buffer<R: Read>(rdr: R) -> Result<bytes::Bytes> {
-    let mut fp = rdr.take(8192);
+    const BUFLEN: usize = (32 * 1024);
+    let mut fp = rdr.take(BUFLEN as u64);
 
-    let buffer = bytes::BytesMut::with_capacity(8192);
+    let buffer = bytes::BytesMut::with_capacity(BUFLEN);
     let mut buffer = buffer.writer();
 
     io::copy(&mut fp, &mut buffer).chain_err(|| "failed to fill buffer with contents of input file")?;
