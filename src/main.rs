@@ -5,13 +5,14 @@ extern crate bytes;
 extern crate derive_error_chain;
 #[macro_use]
 extern crate error_chain;
+extern crate flate2;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
 
 use bytes::BufMut;
 use structopt::StructOpt;
-use std::io::{self, Read};
+use std::io::{self, Read, Seek};
 use std::fs::File;
 
 #[derive(Debug, ErrorChain)]
@@ -167,17 +168,28 @@ mod multiboot1 {
     }
 }
 
-quick_main!{|| -> Result<()> {
-    let opts = Opts::from_args();
-    let fp = File::open(&opts.input).chain_err(|| format!("failed to open input file {}", &opts.input))?;
-    let mut fp = fp.take(8192);
+fn create_buffer<R: Read>(rdr: R) -> Result<bytes::Bytes> {
+    let mut fp = rdr.take(8192);
 
     let buffer = bytes::BytesMut::with_capacity(8192);
     let mut buffer = buffer.writer();
 
-    io::copy(&mut fp, &mut buffer).chain_err(|| format!("failed to fill buffer with contents of input file {}", &opts.input))?;
+    io::copy(&mut fp, &mut buffer).chain_err(|| "failed to fill buffer with contents of input file")?;
+    Ok(buffer.into_inner().freeze())
+}
 
-    let header = multiboot1::Header::parse(buffer.into_inner().freeze());
+quick_main!{|| -> Result<()> {
+    let opts = Opts::from_args();
+    let fp = File::open(&opts.input).chain_err(|| format!("failed to open input file {}", &opts.input))?;
+
+    let fp = flate2::read::GzDecoder::new(fp);
+    let bytes = if fp.header().is_some() { create_buffer(fp) } else {
+        let mut fp = fp.into_inner();
+        fp.seek(io::SeekFrom::Start(0)).chain_err(|| "failed to seek back to beginning of file")?;
+        create_buffer(fp)
+    };
+
+    let header = multiboot1::Header::parse(bytes?);
     if let Some(header) = header {
         println!("{}", header);
     }
