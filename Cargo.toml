@@ -1,0 +1,9 @@
+[package]
+authors = ["Jonathan Creekmore <jonathan@thecreekmores.org>"]
+name = "bootinfo"
+version = "0.1.0"
+
+[dependencies]
+derive-error-chain = "0.11.0"
+error-chain = "0.11.0"
+structopt = "0.1.6"
