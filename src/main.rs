@@ -16,6 +16,7 @@ use std::io::{self, Read, Seek};
 use std::fs::File;
 
 mod multiboot1;
+mod multiboot2;
 
 #[derive(Debug, ErrorChain)]
 pub enum ErrorKind {
@@ -53,7 +54,14 @@ quick_main!{|| -> Result<()> {
         create_buffer(fp)
     };
 
-    let header = multiboot1::Header::parse(bytes?);
+    let bytes = bytes?;
+
+    let header = multiboot1::Header::parse(bytes.clone());
+    if let Some(header) = header {
+        println!("{}", header);
+    }
+
+    let header = multiboot2::Header::parse(bytes.clone());
     if let Some(header) = header {
         println!("{}", header);
     }
