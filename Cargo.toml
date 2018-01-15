@@ -4,6 +4,8 @@ name = "bootinfo"
 version = "0.1.0"
 license = "Apache-2.0/MIT"
 readme = "README.md"
+repository = "https://github.com/jcreekmore/bootinfo"
+description = "A tool for displaying boot info from a binary such as a Multiboot-compliant file."
 categories = ["development-tools"]
 
 [dependencies]
