@@ -2,6 +2,9 @@
 authors = ["Jonathan Creekmore <jonathan@thecreekmores.org>"]
 name = "bootinfo"
 version = "0.1.0"
+license = "Apache-2.0/MIT"
+readme = "README.md"
+categories = ["development-tools"]
 
 [dependencies]
 bitflags = "1.0.1"
