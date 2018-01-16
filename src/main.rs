@@ -14,8 +14,9 @@ extern crate structopt_derive;
 
 use bytes::BufMut;
 use structopt::StructOpt;
-use std::io::{self, Read, Seek};
+use std::collections::HashSet;
 use std::fs::File;
+use std::io::{self, Read, Seek};
 
 mod parsers;
 
@@ -33,6 +34,12 @@ pub enum ErrorKind {
 struct Opts {
     #[structopt(help = "Input file")]
     input: String,
+    #[structopt(name = "PARSER", long = "is")]
+    /// A single parser type such as multiboot1 or multiboot2
+    is: Option<String>,
+    #[structopt(name = "PARSERS", long = "print")]
+    /// A comma-delimited list of parsers to probe for and print: multiboot1,multiboot2
+    print: Option<String>,
 }
 
 /// Create a buffer from the file
@@ -68,26 +75,47 @@ fn possible_header_bytes(filename: &str, buflen: usize) -> Result<bytes::Bytes> 
     }
 }
 
-quick_main!{|| -> Result<()> {
+quick_main!{|| -> Result<i32> {
     // Parse the arguments
     let opts = Opts::from_args();
 
+    let allowed_parsers: Vec<&parsers::Descriptor> = match (opts.is.as_ref(), opts.print.as_ref()) {
+        (Some(is), None) => {
+            INFO.iter().filter(|p| p.name == is).collect()
+        },
+        (None, Some(print)) => {
+            let parsers: HashSet<&str> = print.split(',').collect();
+            INFO.iter().filter(|p| parsers.contains(p.name)).collect()
+        },
+        (None, None) => {
+            INFO.iter().collect()
+        },
+        _ => {
+            return Err("Can only specify one of --is and --print".into());
+        }
+    };
+
     // Grab the maximum range that the header can be found
-    let max_range = INFO.iter().map(|d| d.max_range).max().unwrap_or(0);
+    let max_range = allowed_parsers.iter().map(|d| d.max_range).max().unwrap_or(0);
 
     // Get the possible header bytes out of the file
     let bytes = possible_header_bytes(&opts.input, max_range)?;
 
     // For each known descriptor
-    for info in INFO.iter() {
+    let headers: Vec<Box<parsers::BootInfo>> = allowed_parsers.iter().filter_map(|info| {
         // Attempt to parse the possible header bytes as that type
-        let header = info.parse(bytes.clone());
-        // If it is the correct type
-        if let Some(header) = header {
+        info.parse(bytes.clone())
+    }).collect();
+
+    // If we are not simply checking for presence
+    if opts.is.is_none() {
+        for header in &headers {
             // Print the header fields out
             println!("{}", header);
         }
     }
 
-    Ok(())
+    let status = if headers.is_empty() { 1 } else { 0 };
+
+    Ok(status)
 }}

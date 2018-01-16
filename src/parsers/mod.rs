@@ -25,4 +25,3 @@ pub fn register() -> Vec<Descriptor> {
     multiboot2::register(&mut descs);
     descs
 }
-
