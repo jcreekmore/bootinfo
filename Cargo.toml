@@ -1,15 +1,17 @@
 [package]
 authors = ["Jonathan Creekmore <jonathan@thecreekmores.org>"]
-name = "bootinfo"
-version = "0.1.0"
+categories = ["development-tools"]
+description = "A tool for displaying boot info from a binary such as a Multiboot-compliant file."
 license = "Apache-2.0/MIT"
+name = "bootinfo"
 readme = "README.md"
 repository = "https://github.com/jcreekmore/bootinfo"
-description = "A tool for displaying boot info from a binary such as a Multiboot-compliant file."
-categories = ["development-tools"]
+version = "0.1.0"
 
 [badges]
-travis-ci = { repository = "jcreekmore/bootinfo" }
+
+[badges.travis-ci]
+repository = "jcreekmore/bootinfo"
 
 [dependencies]
 bitflags = "1.0.1"
@@ -17,5 +19,6 @@ bytes = "0.4.6"
 derive-error-chain = "0.11.0"
 error-chain = "0.11.0"
 flate2 = "1.0.1"
+lazy_static = "1.0.0"
 structopt = "0.1.6"
 structopt-derive = "0.1.6"

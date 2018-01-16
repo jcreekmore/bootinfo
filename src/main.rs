@@ -6,6 +6,8 @@ extern crate derive_error_chain;
 #[macro_use]
 extern crate error_chain;
 extern crate flate2;
+#[macro_use]
+extern crate lazy_static;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
@@ -40,6 +42,10 @@ fn register_descriptors() -> Vec<Descriptor> {
     descs
 }
 
+lazy_static! {
+    static ref INFO: Vec<Descriptor> = register_descriptors();
+}
+
 #[derive(Debug, ErrorChain)]
 pub enum ErrorKind {
     Msg(String),
@@ -67,8 +73,7 @@ fn create_buffer<R: Read>(rdr: R, buflen: usize) -> Result<bytes::Bytes> {
 /// Read out the possible header bytes from the file
 fn possible_header_bytes(filename: &str, buflen: usize) -> Result<bytes::Bytes> {
     // Open the input file
-    let fp = File::open(filename)
-        .chain_err(|| format!("failed to open input file {}", filename))?;
+    let fp = File::open(filename).chain_err(|| format!("failed to open input file {}", filename))?;
 
     // Assume that it is GZip-encoded
     let fp = flate2::read::GzDecoder::new(fp);
@@ -87,20 +92,17 @@ fn possible_header_bytes(filename: &str, buflen: usize) -> Result<bytes::Bytes> 
 }
 
 quick_main!{|| -> Result<()> {
-    // Register all of the known descriptors
-    let descriptors = register_descriptors();
-
     // Parse the arguments
     let opts = Opts::from_args();
 
     // Grab the maximum range that the header can be found
-    let max_range = &descriptors.iter().map(|d| d.max_range).max().unwrap_or(0);
+    let max_range = INFO.iter().map(|d| d.max_range).max().unwrap_or(0);
 
     // Get the possible header bytes out of the file
-    let bytes = possible_header_bytes(&opts.input, *max_range)?;
+    let bytes = possible_header_bytes(&opts.input, max_range)?;
 
     // For each known descriptor
-    for info in &descriptors {
+    for info in INFO.iter() {
         // Attempt to parse the possible header bytes as that type
         let header = info.parse(bytes.clone());
         // If it is the correct type
