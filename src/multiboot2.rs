@@ -269,12 +269,8 @@ impl fmt::Display for Tag {
                 write!(f, "    Load End   : 0x{:.08x}\n", load_end_addr)?;
                 write!(f, "    BSS End    : 0x{:.08x}\n", bss_end_addr)?;
             }
-            TagVariant::Entry { entry_addr } => {
-                write!(f, "    Entry      : 0x{:.08x}\n", entry_addr)?;
-            }
-            TagVariant::EfiI386Entry { entry_addr } => {
-                write!(f, "    Entry      : 0x{:.08x}\n", entry_addr)?;
-            }
+            TagVariant::Entry { entry_addr } |
+            TagVariant::EfiI386Entry { entry_addr } |
             TagVariant::EfiAmd64Entry { entry_addr } => {
                 write!(f, "    Entry      : 0x{:.08x}\n", entry_addr)?;
             }
