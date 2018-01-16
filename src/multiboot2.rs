@@ -254,11 +254,11 @@ impl fmt::Display for Tag {
                self.flags,
                self.flags.bits())?;
         write!(f, "    Size       : {} bytes\n", self.size)?;
-        match &self.variant {
-            &TagVariant::InformationRequest { ref mbi_tag_types } => {
+        match self.variant {
+            TagVariant::InformationRequest { ref mbi_tag_types } => {
                 write!(f, "    Types      : {:?}\n", mbi_tag_types)?;
             }
-            &TagVariant::Address {
+            TagVariant::Address {
                 header_addr,
                 load_addr,
                 load_end_addr,
@@ -269,19 +269,19 @@ impl fmt::Display for Tag {
                 write!(f, "    Load End   : 0x{:.08x}\n", load_end_addr)?;
                 write!(f, "    BSS End    : 0x{:.08x}\n", bss_end_addr)?;
             }
-            &TagVariant::Entry { entry_addr } => {
+            TagVariant::Entry { entry_addr } => {
                 write!(f, "    Entry      : 0x{:.08x}\n", entry_addr)?;
             }
-            &TagVariant::EfiI386Entry { entry_addr } => {
+            TagVariant::EfiI386Entry { entry_addr } => {
                 write!(f, "    Entry      : 0x{:.08x}\n", entry_addr)?;
             }
-            &TagVariant::EfiAmd64Entry { entry_addr } => {
+            TagVariant::EfiAmd64Entry { entry_addr } => {
                 write!(f, "    Entry      : 0x{:.08x}\n", entry_addr)?;
             }
-            &TagVariant::Flags { console_flags } => {
+            TagVariant::Flags { console_flags } => {
                 write!(f, "    Console    : 0x{:.08x}\n", console_flags)?;
             }
-            &TagVariant::Framebuffer {
+            TagVariant::Framebuffer {
                 width,
                 height,
                 depth,
@@ -290,7 +290,7 @@ impl fmt::Display for Tag {
                 write!(f, "    Height     : {}\n", height)?;
                 write!(f, "    Depth      : {}\n", depth)?;
             }
-            &TagVariant::Relocatable {
+            TagVariant::Relocatable {
                 min_addr,
                 max_addr,
                 align,
