@@ -52,6 +52,7 @@ struct Opts {
     input: String,
 }
 
+/// Create a buffer from the file
 fn create_buffer<R: Read>(rdr: R, buflen: usize) -> Result<bytes::Bytes> {
     let mut fp = rdr.take(buflen as u64);
 
@@ -63,28 +64,48 @@ fn create_buffer<R: Read>(rdr: R, buflen: usize) -> Result<bytes::Bytes> {
     Ok(buffer.into_inner().freeze())
 }
 
+/// Read out the possible header bytes from the file
+fn possible_header_bytes(filename: &str, buflen: usize) -> Result<bytes::Bytes> {
+    // Open the input file
+    let fp = File::open(filename)
+        .chain_err(|| format!("failed to open input file {}", filename))?;
+
+    // Assume that it is GZip-encoded
+    let fp = flate2::read::GzDecoder::new(fp);
+    // If it was in fact GZip-encoded
+    if fp.header().is_some() {
+        // Create a buffer out of the uncompressed bytes
+        create_buffer(fp, buflen)
+    } else {
+        // Otherwise, we need to get back the original file
+        let mut fp = fp.into_inner();
+        // Rewind to the beginning of it
+        fp.seek(io::SeekFrom::Start(0)).chain_err(|| "failed to seek back to beginning of file")?;
+        // And create a buffer from the uncompressed bytes
+        create_buffer(fp, buflen)
+    }
+}
+
 quick_main!{|| -> Result<()> {
+    // Register all of the known descriptors
     let descriptors = register_descriptors();
 
+    // Parse the arguments
     let opts = Opts::from_args();
-    let fp = File::open(&opts.input)
-        .chain_err(|| format!("failed to open input file {}", &opts.input))?;
 
     // Grab the maximum range that the header can be found
     let max_range = &descriptors.iter().map(|d| d.max_range).max().unwrap_or(0);
 
-    let fp = flate2::read::GzDecoder::new(fp);
-    let bytes = if fp.header().is_some() { create_buffer(fp, *max_range) } else {
-        let mut fp = fp.into_inner();
-        fp.seek(io::SeekFrom::Start(0)).chain_err(|| "failed to seek back to beginning of file")?;
-        create_buffer(fp, *max_range)
-    };
+    // Get the possible header bytes out of the file
+    let bytes = possible_header_bytes(&opts.input, *max_range)?;
 
-    let bytes = bytes?;
-
+    // For each known descriptor
     for info in &descriptors {
+        // Attempt to parse the possible header bytes as that type
         let header = info.parse(bytes.clone());
+        // If it is the correct type
         if let Some(header) = header {
+            // Print the header fields out
             println!("{}", header);
         }
     }
