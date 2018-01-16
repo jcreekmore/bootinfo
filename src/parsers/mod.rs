@@ -16,11 +16,13 @@ impl Descriptor {
     }
 }
 
+pub mod linux;
 pub mod multiboot1;
 pub mod multiboot2;
 
 pub fn register() -> Vec<Descriptor> {
     let mut descs = vec![];
+    linux::register(&mut descs);
     multiboot1::register(&mut descs);
     multiboot2::register(&mut descs);
     descs
