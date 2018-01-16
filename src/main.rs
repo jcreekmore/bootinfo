@@ -15,8 +15,24 @@ use structopt::StructOpt;
 use std::io::{self, Read, Seek};
 use std::fs::File;
 
+pub trait BootInfo: std::fmt::Display {}
+pub type ParseBootInfo = fn(bytes::Bytes) -> Option<Box<BootInfo>>;
+
+pub struct Descriptor {
+    pub name: &'static str,
+    parser: ParseBootInfo,
+}
+
+impl Descriptor {
+    pub fn parse(&self, buf: bytes::Bytes) -> Option<Box<BootInfo>> {
+        (self.parser)(buf)
+    }
+}
+
 mod multiboot1;
 mod multiboot2;
+
+const INFO: [&Descriptor; 2] = [&multiboot1::INFO, &multiboot2::INFO];
 
 #[derive(Debug, ErrorChain)]
 pub enum ErrorKind {
@@ -56,14 +72,11 @@ quick_main!{|| -> Result<()> {
 
     let bytes = bytes?;
 
-    let header = multiboot1::Header::parse(bytes.clone());
-    if let Some(header) = header {
-        println!("{}", header);
-    }
-
-    let header = multiboot2::Header::parse(bytes.clone());
-    if let Some(header) = header {
-        println!("{}", header);
+    for info in &INFO {
+        let header = info.parse(bytes.clone());
+        if let Some(header) = header {
+            println!("{}", header);
+        }
     }
 
     Ok(())

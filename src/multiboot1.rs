@@ -57,8 +57,10 @@ pub struct Header {
     depth: u32,
 }
 
+impl super::BootInfo for Header {}
+
 impl Header {
-    pub fn parse(buf: ::bytes::Bytes) -> Option<Header> {
+    pub fn parse(buf: ::bytes::Bytes) -> Option<Box<super::BootInfo>> {
         let mut buf = buf.into_buf();
         while buf.remaining() > ::std::mem::size_of::<u32>() {
             let value = buf.get_u32::<::bytes::LittleEndian>();
@@ -76,20 +78,22 @@ impl Header {
                 return None;
             }
 
-            Some(Header {
-                     magic: MAGIC,
-                     flags: Flags::from_bits_truncate(flags),
-                     checksum: checksum,
-                     header_addr: buf.get_u32::<::bytes::LittleEndian>(),
-                     load_addr: buf.get_u32::<::bytes::LittleEndian>(),
-                     load_end_addr: buf.get_u32::<::bytes::LittleEndian>(),
-                     bss_end_addr: buf.get_u32::<::bytes::LittleEndian>(),
-                     entry_addr: buf.get_u32::<::bytes::LittleEndian>(),
-                     mode_type: buf.get_u32::<::bytes::LittleEndian>(),
-                     width: buf.get_u32::<::bytes::LittleEndian>(),
-                     height: buf.get_u32::<::bytes::LittleEndian>(),
-                     depth: buf.get_u32::<::bytes::LittleEndian>(),
-                 })
+            let header = Header {
+                magic: MAGIC,
+                flags: Flags::from_bits_truncate(flags),
+                checksum: checksum,
+                header_addr: buf.get_u32::<::bytes::LittleEndian>(),
+                load_addr: buf.get_u32::<::bytes::LittleEndian>(),
+                load_end_addr: buf.get_u32::<::bytes::LittleEndian>(),
+                bss_end_addr: buf.get_u32::<::bytes::LittleEndian>(),
+                entry_addr: buf.get_u32::<::bytes::LittleEndian>(),
+                mode_type: buf.get_u32::<::bytes::LittleEndian>(),
+                width: buf.get_u32::<::bytes::LittleEndian>(),
+                height: buf.get_u32::<::bytes::LittleEndian>(),
+                depth: buf.get_u32::<::bytes::LittleEndian>(),
+            };
+
+            Some(Box::new(header) as Box<super::BootInfo>)
         }
     }
 }
@@ -139,3 +143,8 @@ impl fmt::Display for Header {
         Ok(())
     }
 }
+
+pub const INFO: super::Descriptor = super::Descriptor {
+    name: "multiboot1",
+    parser: Header::parse,
+};
