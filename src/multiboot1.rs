@@ -144,7 +144,9 @@ impl fmt::Display for Header {
     }
 }
 
-pub const INFO: super::Descriptor = super::Descriptor {
-    name: "multiboot1",
-    parser: Header::parse,
-};
+pub fn register(descs: &mut Vec<super::Descriptor>) {
+    descs.push(super::Descriptor {
+        name: "multiboot1",
+        parser: Header::parse,
+    })
+}

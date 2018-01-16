@@ -298,7 +298,9 @@ impl fmt::Display for Tag {
     }
 }
 
-pub const INFO: super::Descriptor = super::Descriptor {
-    name: "multiboot2",
-    parser: Header::parse,
-};
+pub fn register(descs: &mut Vec<super::Descriptor>) {
+    descs.push(super::Descriptor {
+        name: "multiboot2",
+        parser: Header::parse,
+    })
+}

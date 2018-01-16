@@ -32,7 +32,12 @@ impl Descriptor {
 mod multiboot1;
 mod multiboot2;
 
-const INFO: [&Descriptor; 2] = [&multiboot1::INFO, &multiboot2::INFO];
+fn register_descriptors() -> Vec<Descriptor> {
+    let mut descs = vec![];
+    multiboot1::register(&mut descs);
+    multiboot2::register(&mut descs);
+    descs
+}
 
 #[derive(Debug, ErrorChain)]
 pub enum ErrorKind {
@@ -59,6 +64,8 @@ fn create_buffer<R: Read>(rdr: R) -> Result<bytes::Bytes> {
 }
 
 quick_main!{|| -> Result<()> {
+    let descriptors = register_descriptors();
+
     let opts = Opts::from_args();
     let fp = File::open(&opts.input)
         .chain_err(|| format!("failed to open input file {}", &opts.input))?;
@@ -72,7 +79,7 @@ quick_main!{|| -> Result<()> {
 
     let bytes = bytes?;
 
-    for info in &INFO {
+    for info in &descriptors {
         let header = info.parse(bytes.clone());
         if let Some(header) = header {
             println!("{}", header);
