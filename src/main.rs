@@ -17,33 +17,10 @@ use structopt::StructOpt;
 use std::io::{self, Read, Seek};
 use std::fs::File;
 
-pub trait BootInfo: std::fmt::Display {}
-pub type ParseBootInfo = fn(bytes::Bytes) -> Option<Box<BootInfo>>;
-
-pub struct Descriptor {
-    pub name: &'static str,
-    pub max_range: usize,
-    parser: ParseBootInfo,
-}
-
-impl Descriptor {
-    pub fn parse(&self, buf: bytes::Bytes) -> Option<Box<BootInfo>> {
-        (self.parser)(buf)
-    }
-}
-
-mod multiboot1;
-mod multiboot2;
-
-fn register_descriptors() -> Vec<Descriptor> {
-    let mut descs = vec![];
-    multiboot1::register(&mut descs);
-    multiboot2::register(&mut descs);
-    descs
-}
+mod parsers;
 
 lazy_static! {
-    static ref INFO: Vec<Descriptor> = register_descriptors();
+    static ref INFO: Vec<parsers::Descriptor> = parsers::register();
 }
 
 #[derive(Debug, ErrorChain)]
