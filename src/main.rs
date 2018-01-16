@@ -20,6 +20,7 @@ pub type ParseBootInfo = fn(bytes::Bytes) -> Option<Box<BootInfo>>;
 
 pub struct Descriptor {
     pub name: &'static str,
+    pub max_range: usize,
     parser: ParseBootInfo,
 }
 
@@ -51,11 +52,10 @@ struct Opts {
     input: String,
 }
 
-fn create_buffer<R: Read>(rdr: R) -> Result<bytes::Bytes> {
-    const BUFLEN: usize = (32 * 1024);
-    let mut fp = rdr.take(BUFLEN as u64);
+fn create_buffer<R: Read>(rdr: R, buflen: usize) -> Result<bytes::Bytes> {
+    let mut fp = rdr.take(buflen as u64);
 
-    let buffer = bytes::BytesMut::with_capacity(BUFLEN);
+    let buffer = bytes::BytesMut::with_capacity(buflen);
     let mut buffer = buffer.writer();
 
     io::copy(&mut fp, &mut buffer)
@@ -70,11 +70,14 @@ quick_main!{|| -> Result<()> {
     let fp = File::open(&opts.input)
         .chain_err(|| format!("failed to open input file {}", &opts.input))?;
 
+    // Grab the maximum range that the header can be found
+    let max_range = &descriptors.iter().map(|d| d.max_range).max().unwrap_or(0);
+
     let fp = flate2::read::GzDecoder::new(fp);
-    let bytes = if fp.header().is_some() { create_buffer(fp) } else {
+    let bytes = if fp.header().is_some() { create_buffer(fp, *max_range) } else {
         let mut fp = fp.into_inner();
         fp.seek(io::SeekFrom::Start(0)).chain_err(|| "failed to seek back to beginning of file")?;
-        create_buffer(fp)
+        create_buffer(fp, *max_range)
     };
 
     let bytes = bytes?;

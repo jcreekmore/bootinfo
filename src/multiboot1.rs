@@ -147,6 +147,7 @@ impl fmt::Display for Header {
 pub fn register(descs: &mut Vec<super::Descriptor>) {
     descs.push(super::Descriptor {
         name: "multiboot1",
+        max_range: 8192,
         parser: Header::parse,
     })
 }

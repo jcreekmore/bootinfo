@@ -301,6 +301,7 @@ impl fmt::Display for Tag {
 pub fn register(descs: &mut Vec<super::Descriptor>) {
     descs.push(super::Descriptor {
         name: "multiboot2",
+        max_range: 32768,
         parser: Header::parse,
     })
 }
