@@ -8,6 +8,9 @@ repository = "https://github.com/jcreekmore/bootinfo"
 description = "A tool for displaying boot info from a binary such as a Multiboot-compliant file."
 categories = ["development-tools"]
 
+[badges]
+travis-ci = { repository = "jcreekmore/bootinfo" }
+
 [dependencies]
 bitflags = "1.0.1"
 bytes = "0.4.6"
