@@ -87,9 +87,10 @@ impl Header {
         let architecture = buf.get_u32::<bytes::LittleEndian>();
         let header_length = buf.get_u32::<bytes::LittleEndian>();
         let checksum = buf.get_u32::<bytes::LittleEndian>();
-        if MAGIC.wrapping_add(architecture)
-            .wrapping_add(header_length)
-            .wrapping_add(checksum) != 0 {
+        if MAGIC
+               .wrapping_add(architecture)
+               .wrapping_add(header_length)
+               .wrapping_add(checksum) != 0 {
             return None;
         }
 
@@ -177,11 +178,11 @@ impl Header {
                 }
             };
             tags.push(Tag {
-                typ: typ,
-                flags: Flags::from_bits_truncate(flags),
-                size: size,
-                variant: variant,
-            });
+                          typ: typ,
+                          flags: Flags::from_bits_truncate(flags),
+                          size: size,
+                          variant: variant,
+                      });
 
             buf.advance(padding);
 
@@ -260,7 +261,12 @@ impl fmt::Display for Tag {
             TagVariant::InformationRequest { ref mbi_tag_types } => {
                 write!(f, "    Types      : {:?}\n", mbi_tag_types)?;
             }
-            TagVariant::Address { header_addr, load_addr, load_end_addr, bss_end_addr } => {
+            TagVariant::Address {
+                header_addr,
+                load_addr,
+                load_end_addr,
+                bss_end_addr,
+            } => {
                 write!(f, "    Header     : 0x{:.08x}\n", header_addr)?;
                 write!(f, "    Load       : 0x{:.08x}\n", load_addr)?;
                 write!(f, "    Load End   : 0x{:.08x}\n", load_end_addr)?;
@@ -274,23 +280,30 @@ impl fmt::Display for Tag {
             TagVariant::Flags { console_flags } => {
                 write!(f, "    Console    : 0x{:.08x}\n", console_flags)?;
             }
-            TagVariant::Framebuffer { width, height, depth } => {
+            TagVariant::Framebuffer {
+                width,
+                height,
+                depth,
+            } => {
                 write!(f, "    Width      : {}\n", width)?;
                 write!(f, "    Height     : {}\n", height)?;
                 write!(f, "    Depth      : {}\n", depth)?;
             }
-            TagVariant::Relocatable { min_addr, max_addr, align, preference } => {
+            TagVariant::Relocatable {
+                min_addr,
+                max_addr,
+                align,
+                preference,
+            } => {
                 write!(f, "    Min Addr   : 0x{:.08x}\n", min_addr)?;
                 write!(f, "    Max Addr   : 0x{:.08x}\n", max_addr)?;
                 write!(f, "    Align      : 0x{:.08x}\n", align)?;
-                write!(f,
-                       "    Preference : {}\n",
-                       match preference {
-                           0 => "none",
-                           1 => "minimum",
-                           2 => "maximum",
-                           _ => "unknown",
-                       })?;
+                write!(f, "    Preference : {}\n", match preference {
+                    0 => "none",
+                    1 => "minimum",
+                    2 => "maximum",
+                    _ => "unknown",
+                })?;
             }
             _ => {}
         }
@@ -300,8 +313,8 @@ impl fmt::Display for Tag {
 
 pub fn register(descs: &mut Vec<super::Descriptor>) {
     descs.push(super::Descriptor {
-        name: "multiboot2",
-        max_range: 32768,
-        parser: Header::parse,
-    })
+                   name: "multiboot2",
+                   max_range: 32768,
+                   parser: Header::parse,
+               })
 }
