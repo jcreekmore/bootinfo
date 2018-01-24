@@ -77,7 +77,12 @@ impl Header {
             let version = buf.get_u16::<LittleEndian>();
             if version != 0 && version < (0x200 * setup_sects as u16) {
                 version_buf.advance(version as usize + 0x200);
-                let s = unsafe { CString::from_vec_unchecked(version_buf.iter().take_while(|x| *x != 0).collect()) };
+                let s = unsafe {
+                    CString::from_vec_unchecked(version_buf
+                                                    .iter()
+                                                    .take_while(|x| *x != 0)
+                                                    .collect())
+                };
                 Some(s)
             } else {
                 None
@@ -120,7 +125,7 @@ impl Header {
         let init_size = buf.get_u32::<LittleEndian>();
         let handover_offset = buf.get_u32::<LittleEndian>();
 
-        let header =  Header {
+        let header = Header {
             setup_sects: setup_sects,
             syssize: syssize,
             header: header,
@@ -154,15 +159,32 @@ impl fmt::Display for Header {
             write!(f, "  Kernel Version: {}\n", version.to_string_lossy())?;
         }
         write!(f, "  Header: 0x{:.08x}\n", self.header)?;
-        write!(f, "  Version: {}.{}\n", self.version_major, self.version_minor)?;
-        write!(f, "  Setup Sectors: {}\n", if self.setup_sects == 0 { 4 } else { self.setup_sects })?;
+        write!(f,
+               "  Version: {}.{}\n",
+               self.version_major,
+               self.version_minor)?;
+        write!(f,
+               "  Setup Sectors: {}\n",
+               if self.setup_sects == 0 {
+                   4
+               } else {
+                   self.setup_sects
+               })?;
         write!(f, "  PM Code Size: {} bytes\n", (self.syssize * 16))?;
         write!(f, "  Realmode Switch: 0x{:.08x}\n", self.realmode_swtch)?;
-        write!(f, "  Loaded: {}\n", if self.load_flags & 1 == 1 { "HIGH" } else { "LOW" })?;
+        write!(f,
+               "  Loaded: {}\n",
+               if self.load_flags & 1 == 1 {
+                   "HIGH"
+               } else {
+                   "LOW"
+               })?;
         write!(f, "  Code32 Start: 0x{:.08x}\n", self.code32_start)?;
         write!(f, "  Initrd Addr Max: 0x{:.08x}\n", self.initrd_addr_max)?;
         write!(f, "  Kernel Alignment: 0x{:.08x}\n", self.kernel_alignment)?;
-        write!(f, "  Min. Kernel Alignment: 0x{:.08x}\n", self.min_alignment)?;
+        write!(f,
+               "  Min. Kernel Alignment: 0x{:.08x}\n",
+               self.min_alignment)?;
         write!(f, "  Relocatable?: {}\n", self.relocatable_kernel)?;
         write!(f, "  xloadflags: 0x{:.04x}\n", self.xloadflags)?;
         write!(f, "  Max Cmdline Size: {} bytes\n", self.cmdline_size)?;
@@ -172,7 +194,9 @@ impl fmt::Display for Header {
         if let Some(ref address) = self.pref_address {
             write!(f, "  Preferred load address: 0x{:.016x}\n", address)?;
         }
-        write!(f, "  EFI Handover Offset: 0x{:.08x}\n", self.handover_offset)?;
+        write!(f,
+               "  EFI Handover Offset: 0x{:.08x}\n",
+               self.handover_offset)?;
         Ok(())
     }
 }
@@ -183,4 +207,37 @@ pub fn register(descs: &mut Vec<super::Descriptor>) {
                    max_range: 32768,
                    parser: Header::parse,
                })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io;
+    use utils;
+    const MULTIBOOT1: &[u8; 40000] = include_bytes!("../../test-data/multiboot1");
+    const MULTIBOOT2: &[u8; 40000] = include_bytes!("../../test-data/multiboot2");
+    const LINUXBOOT: &[u8; 40000] = include_bytes!("../../test-data/linuxboot");
+
+    #[test]
+    #[should_panic]
+    fn parse_invalid_multiboot1() {
+        let cursor = io::Cursor::new(MULTIBOOT1.as_ref());
+        let bytes = utils::header_bytes(cursor, 8192).unwrap();
+        Header::parse(bytes).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn parse_invalid_multiboot2() {
+        let cursor = io::Cursor::new(MULTIBOOT2.as_ref());
+        let bytes = utils::header_bytes(cursor, 32768).unwrap();
+        Header::parse(bytes).unwrap();
+    }
+
+    #[test]
+    fn parse_valid_linuxboot() {
+        let cursor = io::Cursor::new(LINUXBOOT.as_ref());
+        let bytes = utils::header_bytes(cursor, 32768).unwrap();
+        Header::parse(bytes).unwrap();
+    }
 }

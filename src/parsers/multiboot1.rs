@@ -151,3 +151,27 @@ pub fn register(descs: &mut Vec<super::Descriptor>) {
                    parser: Header::parse,
                })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io;
+    use utils;
+    const MULTIBOOT1: &[u8; 40000] = include_bytes!("../../test-data/multiboot1");
+    const LINUXBOOT: &[u8; 40000] = include_bytes!("../../test-data/linuxboot");
+
+    #[test]
+    fn parse_valid_multiboot1() {
+        let cursor = io::Cursor::new(MULTIBOOT1.as_ref());
+        let bytes = utils::header_bytes(cursor, 8192).unwrap();
+        Header::parse(bytes).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn parse_invalid_linuxboot() {
+        let cursor = io::Cursor::new(LINUXBOOT.as_ref());
+        let bytes = utils::header_bytes(cursor, 32768).unwrap();
+        Header::parse(bytes).unwrap();
+    }
+}
