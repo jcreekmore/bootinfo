@@ -72,12 +72,12 @@ quick_main!{|| -> Result<i32> {
                      .short("q")
                      .long("quiet")
                      .help("do not print the header information"))
-                .arg(Arg::with_name("filter")
+                .arg(Arg::with_name("only")
                      .takes_value(true)
                      .multiple(true)
                      .value_delimiter(",")
-                     .long("filter")
-                     .help("filter for specific boot info types")
+                     .long("only")
+                     .help("only look for specific boot info types")
                      .possible_values(&possible_parsers))
                 .arg(Arg::with_name("INPUT")
                      .required(true)
@@ -87,9 +87,9 @@ quick_main!{|| -> Result<i32> {
     let input = matches.value_of("INPUT").expect("INPUT is a required field");
     let quiet = matches.is_present("quiet");
 
-    let allowed_parsers: Vec<&parsers::Descriptor> = match matches.values_of("filter") {
-        Some(filter) => {
-            let parsers: HashSet<_> = filter.collect();
+    let allowed_parsers: Vec<&parsers::Descriptor> = match matches.values_of("only") {
+        Some(only) => {
+            let parsers: HashSet<_> = only.collect();
             INFO.iter().filter(|p| parsers.contains(p.name)).collect()
         },
         None => INFO.iter().collect()
