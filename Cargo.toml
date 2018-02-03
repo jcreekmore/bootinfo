@@ -6,7 +6,7 @@ license = "Apache-2.0/MIT"
 name = "bootinfo"
 readme = "README.md"
 repository = "https://github.com/jcreekmore/bootinfo"
-version = "0.2.0"
+version = "0.2.1-pre"
 
 [badges.travis-ci]
 repository = "jcreekmore/bootinfo"
